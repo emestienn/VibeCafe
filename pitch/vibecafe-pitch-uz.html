@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VIBECAFE · Demo Day Pitch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap">
+<style>
+  :root{
+    --bg:#F8F9FB; --card:#FFFFFF; --soft:#F4F6F8; --soft2:#EDF0F4;
+    --ink:#15161A; --mut:#7E828C; --dim:#B4B8C0;
+    --or:#FF5C1C; --or-deep:#E84E0F; --or-soft:#FFEDE2;
+    --ok:#189D57; --warn:#DF8E00; --bad:#E0474C; --gold:#F5B301;
+    --r-card:20px; --r-in:14px; --r-btn:12px;
+    --sh:0 18px 40px -18px rgba(21,22,26,.14), 0 4px 14px -6px rgba(21,22,26,.06);
+    --sh-sm:0 8px 22px -12px rgba(21,22,26,.14);
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:'Manrope',-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--sans);
+    font-size:17px; line-height:1.55; overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background:
+      radial-gradient(560px 420px at 12% -6%, rgba(90,120,180,.055), transparent 60%),
+      radial-gradient(680px 520px at 105% 14%, rgba(255,92,28,.05), transparent 62%),
+      radial-gradient(520px 480px at -8% 92%, rgba(90,120,180,.045), transparent 60%);
+  }
+  body::after{
+    content:""; position:fixed; right:-160px; top:-160px; width:480px; height:480px;
+    border-radius:50%; pointer-events:none; z-index:0;
+    background:repeating-radial-gradient(circle at center, rgba(21,22,26,.045) 0 1px, transparent 1px 44px);
+  }
+
+  .deck{position:relative; z-index:1}
+  .slide{
+    min-height:100svh; display:flex; align-items:center; justify-content:center;
+    padding:56px clamp(20px,5vw,72px) 84px; scroll-snap-align:start; position:relative;
+  }
+  @media (min-width:769px){ html{scroll-snap-type:y proximity} }
+  .wrap{width:100%; max-width:1080px}
+  .slide.dense{padding-top:42px; padding-bottom:46px}
+
+  .kick{
+    display:inline-flex; align-items:center; gap:10px;
+    font:600 11.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase;
+    color:var(--mut); margin-bottom:26px;
+  }
+  .kick .mark{width:9px;height:9px;border-radius:3px;background:var(--or);flex:none}
+  .big{font-weight:800; letter-spacing:-.02em; line-height:1.08; text-wrap:balance; font-size:clamp(30px,5.4vw,60px)}
+  .big em{font-style:normal;color:var(--or)}
+  .mid{font-weight:800;letter-spacing:-.015em;line-height:1.14;text-wrap:balance;font-size:clamp(24px,3.6vw,40px)}
+  .mid em{font-style:normal;color:var(--or)}
+  .sub{color:var(--mut); font-size:clamp(16px,1.8vw,20px); max-width:64ch; margin-top:18px}
+  .sub b{color:var(--ink)}
+  .note{font:400 13px/1.6 var(--sans); color:var(--mut)}
+
+  .card{background:var(--card); border-radius:var(--r-card); box-shadow:var(--sh-sm); padding:22px 24px}
+  .pill{display:inline-flex;align-items:center;gap:7px;border-radius:99px;padding:7px 14px;font:600 12.5px/1 var(--mono); letter-spacing:.02em}
+  .pill.or{background:var(--or-soft); color:var(--or-deep)}
+  .pill.gray{background:var(--soft2); color:var(--mut)}
+  .anum{font:700 15px/1 var(--mono); color:var(--dim); flex:none; width:34px}
+  .grid{display:grid; gap:16px; margin-top:34px}
+  .g2{grid-template-columns:1fr 1fr} .g3{grid-template-columns:1fr 1fr 1fr}
+  .g4{grid-template-columns:1fr 1fr 1fr 1fr}
+  .g5{grid-template-columns:repeat(5,1fr)}
+  @media (max-width:900px){ .g2,.g3,.g4,.g5{grid-template-columns:1fr 1fr} }
+  @media (max-width:560px){ .g2,.g3,.g4,.g5{grid-template-columns:1fr} }
+  .card.hot{outline:2px solid var(--or); outline-offset:-2px}
+
+  .darktile{
+    background:linear-gradient(135deg,#17181C,#26272B); color:#F5F6F8;
+    border-radius:var(--r-card); padding:clamp(30px,5vw,56px);
+    box-shadow:0 24px 50px -22px rgba(21,22,26,.5);
+  }
+  .darktile .sub{color:#B8BBC4}
+  .leadline{font-weight:800;font-size:clamp(22px,3.3vw,38px);line-height:1.26;letter-spacing:-.02em}
+
+  .chain{display:grid; grid-template-columns:1fr auto 1fr auto 1fr; gap:12px; align-items:stretch; margin-top:36px}
+  .chain .cel{background:var(--card); border-radius:var(--r-card); box-shadow:var(--sh-sm); padding:22px}
+  .chain .ar{align-self:center; font:700 20px/1 var(--mono); color:var(--or)}
+  .chain .cel .h{font-weight:800; font-size:19px}
+  .chain .cel p{font-size:14px; color:var(--mut); margin-top:8px}
+  .chain .cel .ex{margin-top:14px; padding-top:12px; border-top:1px dashed var(--soft2); font-size:13.5px; color:#3C3E45}
+  @media (max-width:820px){ .chain{grid-template-columns:1fr} .chain .ar{transform:rotate(90deg); justify-self:center} }
+
+  .evidence{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-top:30px}
+  .evidence .card{min-height:170px}
+  .evidence .card b{display:block;font-size:19px;margin-top:8px}
+  .evidence .card p{font-size:14px;color:var(--mut);margin-top:11px}
+  .label{font:700 11px/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+  @media (max-width:820px){ .evidence{grid-template-columns:1fr} .evidence .card{min-height:auto} }
+
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start;margin-top:30px}
+  .split .col{padding-top:12px;border-top:3px solid var(--soft2)}
+  .split .col.hot{border-color:var(--or)}
+  .split h3{font-size:18px;margin-bottom:10px}
+  .split p,.split li{font-size:15px;line-height:1.55}
+  .muted{color:var(--mut)}
+  @media (max-width:820px){ .split{grid-template-columns:1fr} }
+
+  .step-list{display:grid;gap:9px;margin-top:22px}
+  .step{display:grid;grid-template-columns:86px 1fr;gap:17px;align-items:start;border-bottom:1px solid var(--soft2);padding:0 0 11px}
+  .step:last-child{border-bottom:0}
+  .step .time{font:700 13px/1.35 var(--mono);color:var(--or-deep);padding-top:3px}
+  .step strong{display:block;font-size:17px;line-height:1.28}
+  .step p{font-size:14px;color:var(--mut);margin-top:3px}
+  @media (max-width:600px){ .step{grid-template-columns:68px 1fr} }
+
+  .pitchnote{border-left:4px solid var(--or);padding:17px 20px;background:#fff;border-radius:0 14px 14px 0;box-shadow:var(--sh-sm);font-size:16px;line-height:1.55}
+  .pitchnote b{color:var(--or-deep)}
+
+  .pricing{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:30px}
+  @media (max-width:860px){ .pricing{grid-template-columns:1fr} }
+  .plan{position:relative;background:var(--card);border-radius:var(--r-card);box-shadow:var(--sh-sm);padding:24px}
+  .plan.hot{outline:2px solid var(--or);outline-offset:-2px}
+  .plan .tag{position:absolute;top:-12px;left:22px;background:var(--or);color:#fff;font:700 10.5px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;border-radius:99px;padding:5px 11px}
+  .plan .pname{font-weight:800;font-size:20px}
+  .plan .price{font:700 28px/1 var(--mono);margin-top:10px;letter-spacing:-.02em}
+  .plan .price span{font-size:13px;color:var(--mut);font-weight:600}
+  .plan ul{list-style:none;margin-top:16px;display:flex;flex-direction:column;gap:9px}
+  .plan li{font-size:13.5px;line-height:1.4;display:flex;gap:8px}
+  .plan li::before{content:"✓";color:var(--ok);font-weight:800;flex:none}
+
+  .proof{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:30px}
+  @media (max-width:860px){ .proof{grid-template-columns:1fr 1fr} }
+  @media (max-width:560px){ .proof{grid-template-columns:1fr} }
+  .proof .card{display:flex;gap:11px;align-items:flex-start;padding:18px 20px}
+  .proof .check{flex:none;width:22px;height:22px;border-radius:50%;background:#DFF3E6;color:#0F7A42;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+  .proof .tt{font-weight:800;font-size:14.5px}
+  .proof .dd{font-size:12.5px;color:var(--mut);margin-top:4px;line-height:1.4}
+
+  .stageclock{margin-top:30px;max-width:730px}
+  .stageclock .phase{font:700 14px/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--or-deep);margin-bottom:10px}
+  .stageclock .clock{font:800 clamp(54px,10vw,112px)/1 var(--mono);letter-spacing:-.07em;font-variant-numeric:tabular-nums}
+  .stageclock .clock.warn{color:var(--warn)}
+  .stageclock .clock.over{color:var(--bad);animation:pulse 1s infinite}
+  .stageclock .meter{height:8px;border-radius:99px;background:var(--soft2);overflow:hidden;margin:26px 0 18px}
+  .stageclock .meter i{display:block;height:100%;width:0%;background:var(--or);transition:width .25s}
+  .stageclock button{border:0;border-radius:10px;background:#17181C;color:#fff;padding:12px 18px;font:700 13px/1 var(--sans);cursor:pointer;margin-right:8px}
+  .stageclock button.secondary{background:var(--soft2);color:var(--ink)}
+  .stageclock .small{font:600 12px/1.5 var(--mono);color:var(--mut);margin-top:14px}
+  @keyframes pulse{50%{opacity:.45}}
+
+  #prog{position:fixed; top:0; left:0; height:3px; width:0%; background:var(--or); z-index:50; transition:width .2s}
+  #nav{position:fixed; right:18px; bottom:16px; z-index:50; display:flex; align-items:center; gap:6px; user-select:none}
+  #nav button{width:34px; height:34px; border:none; border-radius:10px; background:rgba(21,22,26,.05); color:var(--mut); font:700 15px/1 var(--mono); cursor:pointer}
+  #nav button:hover{background:rgba(21,22,26,.1); color:var(--ink)}
+  #ctr{font:600 11.5px/1 var(--mono); color:var(--dim); letter-spacing:.06em; padding:0 6px; cursor:default}
+
+  .rv{--d:0ms; opacity:1; transform:none; transition:opacity .55s cubic-bezier(.2,.7,.2,1) var(--d), transform .55s cubic-bezier(.2,.7,.2,1) var(--d)}
+  html.js .slide:not(.in) .rv{opacity:0; transform:translateY(14px); transition:none}
+  @media (prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important; scroll-behavior:auto!important} }
+
+  @media print{
+    body::before,body::after,#nav,#prog{display:none!important}
+    .slide{min-height:auto; page-break-after:always; padding:40px 24px}
+    .rv{opacity:1!important; transform:none!important}
+  }
+</style>
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body>
+<div id="prog"></div>
+<main class="deck" id="deck">
+
+<!-- 1 · TITUL -->
+<section class="slide">
+  <div class="wrap">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:40px">
+      <span style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;background:var(--or);color:#fff;font-size:20px">☕</span>
+      <div>
+        <div style="font:800 15px/1.1 var(--sans);letter-spacing:.22em">VIBECAFE</div>
+        <div style="font:600 10.5px/1 var(--mono);letter-spacing:.14em;color:var(--mut);margin-top:5px">KAFE + ODAMLARNI BOG'LOVCHI PLATFORMA</div>
+      </div>
+    </div>
+    <div class="pill or" style="margin-bottom:20px">DEMO DAY · PITCH</div>
+    <h1 class="big">Kafe va odamni<br><em>bir soniyada</em> bog'laymiz</h1>
+    <p class="sub">Vibe AI orqali — qaysi kafe sizga mos, u yerda kim bor va qanday chegirma olishingiz mumkin, hammasi bir xabarda.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:34px">
+      <span class="pill gray">yo'l: og'riq ✓ → yechim ✓ → biznes-model ✓ → demo — bugun</span>
+      <span class="pill gray">listalash: → / probel</span>
+    </div>
+  </div>
+</section>
+
+<!-- 2 · OG'RIQ -->
+<section class="slide">
+  <div class="wrap">
+    <div class="kick rv"><span class="mark"></span>Qism 1 · Boshlanish</div>
+    <h2 class="mid rv" style="--d:60ms">Avval og'riq, keyin <em>yechim</em></h2>
+    <div class="darktile rv" style="--d:140ms;margin-top:25px">
+      <div class="label" style="color:#B8BBC4">Foydalanuvchi hayotidan qisqa lavha → o'tish</div>
+      <div class="leadline" style="color:#fff;margin-top:14px">«Qachon <span style="color:#FF9256">tinch, noutbukka qulay joy kerak</span> bo'lsa, <span style="color:#FF9256">talaba yoki remote ishlovchi</span> <span style="color:#FF9256">Instagram va Telegram guruhlarini scroll qiladi</span> va <span style="color:#FF9256">yarim soatini</span> yo'qotadi. Biz buni <span style="color:#FF9256">Vibe AI bilan 1 daqiqada</span> hal qilamiz».</div>
+    </div>
+    <div class="split rv" style="--d:230ms">
+      <div class="col"><h3>Funksiyadan boshlash</h3><p class="muted">«Biz kafelar ilovasini yaratdik». Hali nega kerakligi aniq emas.</p></div>
+      <div class="col hot"><h3>Og'riqdan boshlash</h3><p>«Talaba ertalab noutbuk bilan tinch joy qidiradi, 5–6 ta sahifani ochib ko'radi, baribir borib ko'rmaguncha bilmaydi. Vibe AI'ga bir xabar yozasiz — eng mos kafe va u yerdagi odamlar ro'yxati chiqadi».</p></div>
+    </div>
+    <p class="note rv" style="--d:300ms;margin-top:18px">Bu — bizning shaxsiy tajribamiz va suhbatlardan kelib chiqqan hikoya. Miqyosi hali gipoteza.</p>
+  </div>
+</section>
+
+<!-- 3 · DALIL -->
+<section class="slide dense">
+  <div class="wrap">
+    <div class="kick rv"><span class="mark"></span>Qism 1 · Og'riqni isbotlash</div>
+    <h2 class="mid rv" style="--d:60ms">Qayerdan bilamiz bu og'riq borligini?</h2>
+    <div class="evidence">
+      <div class="card rv" style="--d:130ms"><div class="label">01 · Manba</div><b>Qanday bildik?</b><p>20 dan ortiq talaba va remote ishlovchi bilan norasmiy suhbat — aksariyati "mos kafe topish qiyin" deydi.</p></div>
+      <div class="card rv" style="--d:210ms"><div class="label">02 · Miqyos</div><b>Qancha katta?</b><p>Telegram/Instagramdagi "kafe tavsiya qiling" so'rovlari oyiga yuzlab marta takrorlanadi. Aniq sonini pilotda o'lchaymiz.</p></div>
+      <div class="card rv" style="--d:290ms"><div class="label">03 · Motivatsiya</div><b>Nega bizga muhim?</b><p>O'zimiz ko'p marta "yaxshi joy" izlab, borib, kutganimizdek chiqmagan joyda vaqt yo'qotganmiz.</p></div>
+    </div>
+    <p class="note rv" style="--d:360ms;margin-top:24px">Hozircha bu — dastlabki, norasmiy dalil. Pilot davrida raqamlarni aniq o'lchab tasdiqlaymiz.</p>
+  </div>
+</section>
+
+<!-- 4 · YECHIM -->
+<section class="slide">
+  <div class="wrap">
+    <div class="kick rv"><span class="mark"></span>Qism 1 · Yechim</div>
+    <h2 class="mid rv" style="--d:60ms">Vibe AI — kafe emas, <em>kayfiyat</em> bo'yicha qidiradi</h2>
+    <div class="grid g3">
+      <div class="card rv" style="--d:120ms"><h3 style="font-size:16.5px">Google Maps</h3><p class="note" style="margin-top:8px">Masofa va bahoni ko'rsatadi, lekin "vibe"ni, Wi-Fi sifatini, tinchlikni bilmaydi.</p></div>
+      <div class="card rv" style="--d:180ms"><h3 style="font-size:16.5px">Instagram / Telegram</h3><p class="note" style="margin-top:8px">Chiroyli suratlar, ammo tartibsiz, eski va shaxsiylashtirilmagan.</p></div>
+      <div class="card hot rv" style="--d:240ms"><h3 style="font-size:16.5px;color:var(--or-deep)">VIBECAFE</h3><p class="note" style="margin-top:8px">Bir xabar — "tinch, noutbukka qulay joy kerak" — Vibe AI 20+ parametr bo'yicha mos kafe va u yerdagi odamlarni topib beradi.</p></div>
+    </div>
+    <p class="sub rv" style="--d:320ms">Google Maps va Instagram — to'g'ridan-to'g'ri alternativ emas, ular "vibe" muammosini hal qilmaydi. Biz aynan shu bo'shliqni yopamiz.</p>
+  </div>
+</section>
+
+<!-- 5 · NORTH STAR + METRIKALAR -->
+<section class="slide dense">
+  <div class="wrap">
+    <div class="kick rv"><span class="mark"></span>North Star · metrikalar</div>
+    <h2 class="mid rv" style="--d:60ms">Uch metrika: qiymat, jalb qilish, ushlab qolish</h2>
+    <div class="evidence">
+      <div class="card rv" style="--d:130ms"><div class="label">North Star · qiymat</div><b>Qidirdi → Bordi → Bog'landi</b><p>Haftasiga nechta foydalanuvchi Vibe AI orqali kafe topib, borib, va kamida bir odam bilan tanishgan — bu foydalanuvchi oladigan haqiqiy natija.</p></div>
+      <div class="card rv" style="--d:210ms"><div class="label">Jalb qilish · birinchi qadam</div><b>Ro'yxatdan o'tdi → so'radi</b><p>Yangi foydalanuvchilarning qanchasi ro'yxatdan o'tgan haftasida Vibe AI'ga birinchi so'rovni yuboradi?</p></div>
+      <div class="card rv" style="--d:290ms"><div class="label">Ushlab qolish · qaytish</div><b>30 kunda 2-chi check-in</b><p>Birinchi marta check-in qilganlarning qanchasi 30 kun ichida yana bir marta boradi?</p></div>
+    </div>
+    <p class="note rv" style="--d:360ms;margin-top:24px">Pitchda har bir metrikaga qiymat, davr va manbani aytamiz; ma'lumot hali yo'q bo'lsa — o'lchash rejasini aytamiz.</p>
+  </div>
+</section>
+
+<!-- 6 · GIPOTEZALAR -->
+<section class="slide">
+  <div class="wrap">
+    <div class="kick rv"><span class="mark"></span>Gipotezalar holati</div>
+    <h2 class="mid rv" style="--d:60ms">Nimani tekshirdik — nimani tekshiramiz</h2>
+    <div class="split">
+      <div class="col hot rv" style="--d:130ms">
+        <div class="label">Tasdiqlangan · og'riq gipotezasi</div>
+        <h3 style="margin-top:13px">Mos kafe topish qiyin</h3>
+        <p>20 dan ortiq suhbatdoshning aksariyati ijtimoiy tarmoqlarga tayanadi va baribir noaniqlikda qoladi. Og'riq shu guruhda tasdiqlandi; miqyosini pilotda o'lchaymiz.</p>
+      </div>
+      <div class="col rv" style="--d:210ms">
+        <div class="label">Tekshiriladi · yechim gipotezasi</div>
+        <h3 style="margin-top:13px">Vibe AI qaytishni oshiradi</h3>
+        <p>Agar foydalanuvchi 1 daqiqada mos kafe topsa, 30 kun ichida 2-chi marta qaytish darajasi oshadi. Buni pilot kohortada alohida o'lchaymiz.</p>
+      </div>
+    </div>
+    <div class="pitchnote rv" style="--d:290ms;margin-top:28px"><b>Pitchda:</b> tasdiqlangan gipoteza → nimani, kimda tekshirdik, natija va xulosa; kelajakdagi gipoteza → nimani o'zgartiramiz, qaysi metrikani kutamiz va qachon tekshiramiz.</div>
+  </div>
+</section>
+
+<!-- 7 · BIZNES MODELLARI -->
+<section class="slide dense">
+  <div class="wrap">
+    <div class="kick rv"><span class="mark"></span>Qism 3 · Mahsulot qanday pul ishlaydi</div>
+    <h2 class="mid rv" style="--d:60ms">Besh model — va bizning tanlovimiz</h2>
+    <div class="grid g5">
+      <div class="card hot rv" style="--d:120ms; padding:18px 16px"><div style="font-weight:800; font-size:15px">Obuna</div><p class="note" style="margin-top:6px">Foydalanuvchi muntazam to'laydi. VIBECAFE Plus/Pro — asosiy modelimiz.</p></div>
+      <div class="card rv" style="--d:180ms; padding:18px 16px"><div style="font-weight:800; font-size:15px">Tranzaksiya</div><p class="note" style="margin-top:6px">Har bir promo-kod ishlatilishidan komissiya — kelajakdagi qo'shimcha daromad.</p></div>
+      <div class="card rv" style="--d:240ms; padding:18px 16px"><div style="font-weight:800; font-size:15px">Freemium</div><p class="note" style="margin-top:6px">Bepul reja hammaga ochiq; tanga/streak — monetizatsiya emas, ushlab qolish vositasi.</p></div>
+      <div class="card rv" style="--d:300ms; padding:18px 16px"><div style="font-weight:800; font-size:15px">B2B</div><p class="note" style="margin-top:6px">Kafelar featured joylashuv, analitika va tadbir reklamasi uchun to'laydi.</p></div>
+      <div class="card rv" style="--d:360ms; padding:18px 16px"><div style="font-weight:800; font-size:15px">Reklama</div><p class="note" style="margin-top:6px">Hozircha ishlatmaymiz: foydalanuvchi ≠ mijoz bo'lib qolish xavfi bor.</p></div>
+    </div>
+    <p class="sub rv" style="--d:440ms">Biz gibrid model tanladik: foydalanuvchi obunasi (asosiy) + kafe-hamkor to'lovlari (B2B) + kelajakda tranzaksiya komissiyasi.</p>
+  </div>
+</section>
+
+<!-- 8 · TARIFLAR -->
+<section class="slide">
+  <div class="wrap">
+    <div class="kick rv"><span class="mark"></span>Bizning tariflar — hozir ishlaydi</div>
+    <h2 class="mid rv" style="--d:60ms">Bepul, Plus, Pro</h2>
+    <div class="pricing rv" style="--d:140ms">
+      <div class="plan">
+        <div class="pname">Bepul</div>
+        <div class="price">0 <span>so'm/oy</span></div>
+        <ul>
+          <li>Kafelarni cheksiz qidirish</li>
+          <li>Kuniga 5 tagacha Vibe AI so'rovi</li>
+          <li>Har bir amal uchun 1x tanga</li>
+        </ul>
+      </div>
+      <div class="plan hot">
+        <div class="tag">Eng mashhur</div>
+        <div class="pname">Plus</div>
+        <div class="price">15 000 <span>so'm/oy</span></div>
+        <ul>
+          <li>Cheksiz Vibe AI so'rovlari</li>
+          <li>2x tanga</li>
+          <li>Faqat Plus uchun kafe promo-kodlari</li>
+          <li>Oyiga 1 ta streak-freeze</li>
+          <li>Profil hamjamiyatda yuqoriroq ko'rinadi</li>
+        </ul>
+      </div>
+      <div class="plan">
+        <div class="pname">Pro</div>
+        <div class="price">39 000 <span>so'm/oy</span></div>
+        <ul>
+          <li>Plusdagi barcha imkoniyatlar</li>
+          <li>3x tanga</li>
+          <li>Oyiga 3 ta streak-freeze</li>
+          <li>Tadbirlarga erta kirish</li>
+          <li>"Tasdiqlangan" belgisi + ustuvor yordam</li>
+        </ul>
+      </div>
+    </div>
+    <p class="note rv" style="--d:260ms;margin-top:20px">Bu — kodda ishlab turgan haqiqiy reja. To'lov hozircha demo rejimida (mock checkout); Click/Payme ulanishi — keyingi bosqich.</p>
+  </div>
+</section>
+
+<!-- 9 · HAQIQIY FUNKSIYALAR -->
+<section class="slide dense">
+  <div class="wrap">
+    <div class="kick rv"><span class="mark"></span>Bu — faqat slayd emas</div>
+    <h2 class="mid rv" style="--d:60ms">Mahsulotda <em>allaqachon ishlayotgan</em> funksiyalar</h2>
+    <div class="proof">
+      <div class="card rv" style="--d:100ms"><span class="check">✓</span><div><div class="tt">Tanga tizimi</div><div class="dd">Check-in, post, sharh uchun tanga; reja bo'yicha 1x/2x/3x multiplikator.</div></div></div>
+      <div class="card rv" style="--d:140ms"><span class="check">✓</span><div><div class="tt">Streak</div><div class="dd">Kunlik faollik hisobi; Plus/Pro uchun streak-freeze himoyasi.</div></div></div>
+      <div class="card rv" style="--d:180ms"><span class="check">✓</span><div><div class="tt">Promo-kodlar</div><div class="dd">Kafelardan haqiqiy chegirmalar, reja bo'yicha qulflangan/ochiq.</div></div></div>
+      <div class="card rv" style="--d:220ms"><span class="check">✓</span><div><div class="tt">Obuna boshqaruvi</div><div class="dd">/pricing sahifasida bir bosishda reja o'zgartirish.</div></div></div>
+      <div class="card rv" style="--d:260ms"><span class="check">✓</span><div><div class="tt">Admin panel</div><div class="dd">MRR, obunachilar soni, promo-kod statistikasi real vaqtda.</div></div></div>
+      <div class="card rv" style="--d:300ms"><span class="check">✓</span><div><div class="tt">AI limiti</div><div class="dd">Bepul foydalanuvchi — kuniga 5 so'rov; Plus/Pro — cheksiz.</div></div></div>
+    </div>
+    <p class="note rv" style="--d:360ms;margin-top:22px">Bularning barchasi kodga yozildi va test qilindi — bu maket emas, ishlaydigan mahsulot.</p>
+  </div>
+</section>
+
+<!-- 10 · OLTI QISM -->
+<section class="slide dense">
+  <div class="wrap">
+    <div class="kick rv"><span class="mark"></span>Bizning 3 daqiqalik hikoyamiz</div>
+    <h2 class="mid rv" style="--d:60ms">Oltita qism — bir hikoya</h2>
+    <div class="step-list">
+      <div class="step rv" style="--d:110ms"><span class="time">0:00–0:30</span><div><strong>Og'riq hikoyasi</strong><p>Talaba tinch joy qidirib, Instagram'da adashib qoladi.</p></div></div>
+      <div class="step rv" style="--d:160ms"><span class="time">0:30–0:55</span><div><strong>"Biz buni hal qilamiz"</strong><p>Vibe AI — kayfiyat bo'yicha qidiruv, kafe emas.</p></div></div>
+      <div class="step rv" style="--d:210ms"><span class="time">0:55–1:35</span><div><strong>Dalil, metrika, qiymat</strong><p>North Star, jalb qilish, ushlab qolish — va qaysi gipotezalar tasdiqlangan.</p></div></div>
+      <div class="step rv" style="--d:260ms"><span class="time">1:35–1:50</span><div><strong>Biznes-model</strong><p>Obuna + B2B hamkorlik + kelajakda komissiya.</p></div></div>
+      <div class="step rv" style="--d:310ms"><span class="time">1:50–2:40</span><div><strong>MVP va demo</strong><p>Bitta foydalanuvchi yo'li: qidirdi → bordi → tanga/chegirma oldi.</p></div></div>
+      <div class="step rv" style="--d:360ms"><span class="time">2:40–3:00</span><div><strong>CTA</strong><p>Pilotga qo'shiling / sarmoya / birinchi hamkor kafe bo'ling.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 · DEMO -->
+<section class="slide">
+  <div class="wrap">
+    <div class="kick rv"><span class="mark"></span>Qism 1 · Xavfsiz demo</div>
+    <h2 class="mid rv" style="--d:60ms">Bitta tugallangan yo'lni ko'rsatamiz</h2>
+    <div class="chain rv" style="--d:140ms">
+      <div class="cel"><div class="h">Oldin</div><p>Foydalanuvchi vazifasi: tinch, noutbukka qulay joy topish.</p><div class="ex">«Tinch joy, noutbuk bilan ishlash uchun»</div></div>
+      <div class="ar">→</div>
+      <div class="cel"><div class="h">Mahsulotda</div><p>2–3 harakat. Hamma tugmani ko'rsatmaymiz.</p><div class="ex">Vibe AI chat → mos kafe → check-in</div></div>
+      <div class="ar">→</div>
+      <div class="cel"><div class="h">Keyin</div><p>Natija va keyingi o'lchov.</p><div class="ex">Tanga va streak oldi; Plus bo'lsa — chegirma kodi ochiladi</div></div>
+    </div>
+    <div class="pitchnote rv" style="--d:230ms;margin-top:29px"><b>Plan B:</b> skrinshot/video tayyor turadi. Sahnada hech qachon debug qilmaymiz.</div>
+  </div>
+</section>
+
+<!-- 12 · CTA -->
+<section class="slide">
+  <div class="wrap">
+    <div class="kick rv"><span class="mark"></span>Qo'ng'iroq — nima so'raymiz</div>
+    <div class="darktile rv" style="--d:140ms">
+      <div class="leadline" style="color:#fff">Bizga <span style="color:#FF9256">birinchi 3 hamkor kafe</span> va <span style="color:#FF9256">pilot foydalanuvchilar</span> kerak — keyingi 30 kunda real retention sonlarini ko'rsatamiz.</div>
+      <p class="sub">Sarmoyadorlar — keyingi bosqich uchun; mentorlar — fikr-mulohaza; hamma — ro'yxatdan o'tib birinchi bo'lib sinab ko'ring.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 13 · SAVOL-JAVOB -->
+<section class="slide dense">
+  <div class="wrap">
+    <div class="kick rv"><span class="mark"></span>Savol-javoblarga tayyormiz</div>
+    <h2 class="mid rv" style="--d:60ms">Yaxshi javob — bilim chegarasini tan oladi</h2>
+    <div class="darktile rv" style="--d:140ms">
+      <div class="leadline" style="color:#fff">Bilamiz <span style="color:#FF9256">→</span> hali bilmaymiz <span style="color:#FF9256">→</span> qanday tekshiramiz</div>
+    </div>
+    <div class="grid g3">
+      <div class="rv" style="--d:200ms"><span class="anum">01</span><p style="font-size:15px">Bu og'riq haqiqiy ekanligini qayerdan bilasiz?</p></div>
+      <div class="rv" style="--d:250ms"><span class="anum">02</span><p style="font-size:15px">Foydalanuvchi ilovada nima qilib ko'rdi?</p></div>
+      <div class="rv" style="--d:300ms"><span class="anum">03</span><p style="font-size:15px">Yechimingiz hozirgi usuldan nimasi bilan yaxshiroq — buni qanday tekshirasiz?</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 14 · SAHNA TAYMERI -->
+<section class="slide">
+  <div class="wrap">
+    <div class="kick rv"><span class="mark"></span>Sahna · bitta so'zlovchi</div>
+    <h2 class="mid rv" style="--d:60ms">Pitch taymeri</h2>
+    <div class="stageclock rv" id="stage" style="--d:130ms">
+      <div class="phase">Pitch</div>
+      <div class="clock">03:00</div>
+      <div class="meter"><i></i></div>
+      <button type="button" data-run>Boshlash</button>
+      <button type="button" class="secondary" data-add>+30 son</button>
+      <button type="button" class="secondary" data-reset>Qayta boshlash</button>
+      <div class="small">0:00–1:35 og'riq + yechim + dalil · 1:35–1:50 biznes-model · 1:50–2:40 demo · 2:40–3:00 CTA</div>
+    </div>
+  </div>
+</section>
+
+<!-- 15 · YAKUN -->
+<section class="slide">
+  <div class="wrap">
+    <div class="kick rv"><span class="mark"></span>Yakun</div>
+    <div class="darktile rv" style="--d:140ms">
+      <div class="leadline" style="color:#fff">Kimga og'riydi?<br>Yo'lingiz nega yaxshiroq?<br><span style="color:#FF9256">Buni qanday tekshirasiz?</span></div>
+      <p class="sub">Rahmat! VIBECAFE — Qidirdi → Bordi → Bog'landi.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+<div id="nav">
+  <div id="ctr">01/15</div>
+  <button id="pv" type="button" aria-label="Oldingi slayd">‹</button>
+  <button id="nx" type="button" aria-label="Keyingi slayd">›</button>
+</div>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var N = slides.length;
+  var ctr = document.getElementById('ctr'), prog = document.getElementById('prog');
+  function pad(n){ return (n<10?'0':'')+n; }
+
+  function reveal(s){ s.classList.add('in'); }
+
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) {
+          reveal(e.target);
+          ctr.textContent = pad(slides.indexOf(e.target) + 1) + '/' + pad(N);
+        }
+      });
+    }, { threshold: 0.5 });
+    slides.forEach(function(s){ io.observe(s); });
+  } else {
+    slides.forEach(reveal);
+  }
+
+  function onScroll(){
+    var top = window.scrollY;
+    var height = document.documentElement.scrollHeight - window.innerHeight;
+    prog.style.width = (height > 0 ? (top / height * 100) : 0) + '%';
+  }
+  document.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  function currentIndex(){
+    var mid = window.scrollY + window.innerHeight / 2, cur = 0;
+    slides.forEach(function(s, i){ if (s.offsetTop <= mid) cur = i; });
+    return cur;
+  }
+  function go(delta){
+    var next = Math.min(N - 1, Math.max(0, currentIndex() + delta));
+    slides[next].scrollIntoView({ behavior: 'smooth' });
+  }
+  document.getElementById('pv').addEventListener('click', function(){ go(-1); });
+  document.getElementById('nx').addEventListener('click', function(){ go(1); });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowRight' || e.key === ' ') { go(1); e.preventDefault(); }
+    if (e.key === 'ArrowLeft') { go(-1); }
+  });
+
+  reveal(slides[0]);
+  ctr.textContent = '01/' + pad(N);
+})();
+
+(function(){
+  var stage = document.getElementById('stage');
+  if (!stage) return;
+  var btn = stage.querySelector('[data-run]');
+  var resetBtn = stage.querySelector('[data-reset]');
+  var addBtn = stage.querySelector('[data-add]');
+  var clock = stage.querySelector('.clock');
+  var meter = stage.querySelector('.meter i');
+  var total = 180, remaining = total, running = false, timer = null;
+
+  function fmt(s){
+    var sign = s < 0 ? '-' : '';
+    var abs = Math.abs(s);
+    var m = Math.floor(abs / 60), sec = abs % 60;
+    return sign + (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
+  function render(){
+    clock.textContent = fmt(remaining);
+    var pct = Math.max(0, Math.min(100, ((total - remaining) / total) * 100));
+    meter.style.width = pct + '%';
+    clock.classList.remove('warn', 'over');
+    if (remaining <= 0) clock.classList.add('over');
+    else if (remaining <= 30) clock.classList.add('warn');
+  }
+  function tick(){ remaining -= 1; render(); }
+  function toggle(){
+    running = !running;
+    btn.textContent = running ? 'Pauza' : 'Davom ettirish';
+    if (running) timer = setInterval(tick, 1000);
+    else clearInterval(timer);
+  }
+  btn.addEventListener('click', toggle);
+  resetBtn.addEventListener('click', function(){
+    running = false; clearInterval(timer); remaining = total; btn.textContent = 'Boshlash'; render();
+  });
+  addBtn.addEventListener('click', function(){ remaining += 30; render(); });
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,634 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Auth (NextAuth / Auth.js)
+// ---------------------------------------------------------------------------
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String    @unique
+  emailVerified  DateTime?
+  image          String?
+  hashedPassword String?
+  role           Role      @default(USER)
+  isBanned       Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  profile  Profile?
+
+  reviews             Review[]
+  reviewLikes         ReviewLike[]
+  favorites           Favorite[]
+  collections         Collection[]
+  connectionsSent     Connection[]             @relation("requester")
+  connectionsReceived Connection[]             @relation("recipient")
+  eventsOrganized     Event[]                  @relation("organizer")
+  eventParticipations EventParticipant[]
+  cafeVisits          CafeVisit[]
+  notifications       Notification[]
+  messagesSent        Message[]                @relation("sender")
+  messagesReceived    Message[]                @relation("recipient")
+  workSessions        WorkSession[]
+  workSessionJoins    WorkSessionParticipant[]
+
+  posts        Post[]
+  postLikes    PostLike[]
+  postSaves    PostSave[]
+  comments     Comment[]
+  commentLikes CommentLike[]
+  followedBy   Follow[]      @relation("following")
+  following    Follow[]      @relation("follower")
+
+  subscription     Subscription?
+  coinTransactions CoinTransaction[]
+  promoRedemptions PromoCodeRedemption[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------------------------------------------------------------------------
+// Profile & social graph
+// ---------------------------------------------------------------------------
+
+model Profile {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profession             String?
+  bio                    String?
+  location               String?
+  skills                 String[]
+  goals                  String?
+  isOpenToNetworking     Boolean  @default(false)
+  networkingMessage      String?
+  isVisibleForNetworking Boolean  @default(false)
+  points                 Int      @default(0)
+  badges                 String[]
+  currentCafeId          String?
+  currentCafe            Cafe?    @relation(fields: [currentCafeId], references: [id])
+
+  coins          Int       @default(0)
+  currentStreak  Int       @default(0)
+  longestStreak  Int       @default(0)
+  lastActiveDate DateTime?
+  streakFreezes  Int       @default(0)
+  aiQueriesToday Int       @default(0)
+  aiQueriesDate  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  interests Interest[] @relation("ProfileInterests")
+}
+
+model Interest {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  category String?
+  profiles Profile[] @relation("ProfileInterests")
+}
+
+model Connection {
+  id          String           @id @default(cuid())
+  requesterId String
+  requester   User             @relation("requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  recipientId String
+  recipient   User             @relation("recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  status      ConnectionStatus @default(PENDING)
+  message     String?
+  createdAt   DateTime         @default(now())
+
+  @@unique([requesterId, recipientId])
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  senderId    String
+  sender      User     @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipientId String
+  recipient   User     @relation("recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  body        String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Cafe
+// ---------------------------------------------------------------------------
+
+enum NoiseLevel {
+  SILENT
+  QUIET
+  MODERATE
+  LIVELY
+}
+
+enum CrowdLevel {
+  LOW
+  MODERATE
+  HIGH
+}
+
+model Cafe {
+  id          String @id @default(cuid())
+  slug        String @unique
+  name        String
+  tagline     String
+  description String
+
+  address      String
+  city         String
+  neighborhood String
+  lat          Float
+  lng          Float
+
+  priceLevel  Int // 1-4 ($ - $$$$)
+  avgPriceUsd Float
+
+  openingHours Json
+
+  wifiScore           Int
+  outletsScore        Int
+  seatingComfortScore Int
+  coffeeScore         Int
+  foodScore           Int
+  workScore           Int
+  studyScore          Int
+  networkingScore     Int
+  aestheticScore      Int
+  vibeScore           Int
+
+  noiseLevel NoiseLevel
+  crowdLevel CrowdLevel
+
+  hasOutdoorSeating Boolean @default(false)
+  isPetFriendly     Boolean @default(false)
+  isLaptopFriendly  Boolean @default(true)
+  isMeetingFriendly Boolean @default(false)
+  isGroupFriendly   Boolean @default(false)
+  isOpenLate        Boolean @default(false)
+
+  moodTags String[]
+
+  heroImageUrl String
+  rating       Float   @default(0)
+  reviewCount  Int     @default(0)
+  featured     Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  images            CafeImage[]
+  amenities         CafeAmenity[] @relation("CafeAmenities")
+  menu              Menu?
+  reviews           Review[]
+  favorites         Favorite[]
+  visits            CafeVisit[]
+  events            Event[]
+  workSessions      WorkSession[]
+  checkedInProfiles Profile[]
+  posts             Post[]
+  promoCodes        PromoCode[]
+}
+
+// ---------------------------------------------------------------------------
+// Monetization: subscriptions, coins, promo codes
+// ---------------------------------------------------------------------------
+
+enum PlanTier {
+  FREE
+  PLUS
+  PRO
+}
+
+model Subscription {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan        PlanTier  @default(FREE)
+  startedAt   DateTime  @default(now())
+  renewsAt    DateTime?
+  cancelledAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model CoinTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PromoCode {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  cafeId          String?
+  cafe            Cafe?     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  title           String
+  description     String
+  discountPercent Int?
+  requiredPlan    PlanTier  @default(FREE)
+  maxRedemptions  Int?
+  expiresAt       DateTime?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+
+  redemptions PromoCodeRedemption[]
+}
+
+model PromoCodeRedemption {
+  id          String    @id @default(cuid())
+  promoCodeId String
+  promoCode   PromoCode @relation(fields: [promoCodeId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  redeemedAt  DateTime  @default(now())
+
+  @@unique([promoCodeId, userId])
+}
+
+model CafeImage {
+  id       String @id @default(cuid())
+  cafeId   String
+  cafe     Cafe   @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  url      String
+  alt      String
+  position Int    @default(0)
+}
+
+model CafeAmenity {
+  id    String  @id @default(cuid())
+  name  String  @unique
+  icon  String?
+  cafes Cafe[]  @relation("CafeAmenities")
+}
+
+// ---------------------------------------------------------------------------
+// Menu
+// ---------------------------------------------------------------------------
+
+enum MenuCategory {
+  COFFEE
+  TEA
+  BREAKFAST
+  LUNCH
+  DESSERTS
+  DRINKS
+}
+
+model Menu {
+  id     String @id @default(cuid())
+  cafeId String @unique
+  cafe   Cafe   @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+
+  items MenuItem[]
+}
+
+model MenuItem {
+  id          String       @id @default(cuid())
+  menuId      String
+  menu        Menu         @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  category    MenuCategory
+  name        String
+  description String
+  price       Float
+  imageUrl    String?
+  isPopular   Boolean      @default(false)
+}
+
+// ---------------------------------------------------------------------------
+// Reviews
+// ---------------------------------------------------------------------------
+
+model Review {
+  id     String   @id @default(cuid())
+  cafeId String
+  cafe   Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating Int
+  body   String
+  tags   String[]
+
+  coffeeRating    Int?
+  wifiRating      Int?
+  quietnessRating Int?
+  workRating      Int?
+  aestheticRating Int?
+
+  likeCount Int      @default(0)
+  createdAt DateTime @default(now())
+
+  images ReviewImage[]
+  likes  ReviewLike[]
+}
+
+model ReviewImage {
+  id       String @id @default(cuid())
+  reviewId String
+  review   Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  url      String
+}
+
+model ReviewLike {
+  id        String   @id @default(cuid())
+  reviewId  String
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([reviewId, userId])
+}
+
+// ---------------------------------------------------------------------------
+// Saved places
+// ---------------------------------------------------------------------------
+
+model Favorite {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cafeId       String
+  cafe         Cafe        @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  collectionId String?
+  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  createdAt    DateTime    @default(now())
+
+  @@unique([userId, cafeId])
+}
+
+model Collection {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  icon      String?
+  createdAt DateTime   @default(now())
+  favorites Favorite[]
+}
+
+// ---------------------------------------------------------------------------
+// Events
+// ---------------------------------------------------------------------------
+
+model Event {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  cafeId      String
+  cafe        Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  organizerId String
+  organizer   User     @relation("organizer", fields: [organizerId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  category    String
+  startAt     DateTime
+  endAt       DateTime
+  capacity    Int?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+
+  participants EventParticipant[]
+}
+
+model EventParticipant {
+  id       String   @id @default(cuid())
+  eventId  String
+  event    Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt DateTime @default(now())
+
+  @@unique([eventId, userId])
+}
+
+// ---------------------------------------------------------------------------
+// Work With Me
+// ---------------------------------------------------------------------------
+
+model WorkSession {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cafeId    String
+  cafe      Cafe      @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  title     String
+  category  String
+  topics    String[]
+  untilTime DateTime?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+
+  participants WorkSessionParticipant[]
+}
+
+model WorkSessionParticipant {
+  id            String      @id @default(cuid())
+  workSessionId String
+  workSession   WorkSession @relation(fields: [workSessionId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt      DateTime    @default(now())
+
+  @@unique([workSessionId, userId])
+}
+
+// ---------------------------------------------------------------------------
+// Visits
+// ---------------------------------------------------------------------------
+
+model CafeVisit {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cafeId    String
+  cafe      Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  visitedAt DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Social feed: posts, comments, likes, follows
+// ---------------------------------------------------------------------------
+
+enum PostType {
+  CAFE_POST
+  VIBE_POST
+}
+
+model Post {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cafeId   String?
+  cafe     Cafe?    @relation(fields: [cafeId], references: [id], onDelete: SetNull)
+  type     PostType @default(CAFE_POST)
+  caption  String
+  vibeTags String[]
+
+  // Café-post ratings (optional)
+  coffeeRating     Int?
+  atmosphereRating Int?
+  workRating       Int?
+  wifiRating       Int?
+
+  // Vibe-post fields (optional) — mood matches a VibeMoodKey from lib/constants.ts
+  mood         String?
+  energy       Int?
+  workingHours Float?
+  music        String?
+  drink        String?
+
+  likeCount    Int @default(0)
+  commentCount Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  images   PostImage[]
+  likes    PostLike[]
+  comments Comment[]
+  saves    PostSave[]
+}
+
+model PostImage {
+  id       String @id @default(cuid())
+  postId   String
+  post     Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  url      String
+  position Int    @default(0)
+}
+
+// `reaction` supports the spec's distinct reaction vocabulary ("Same vibe",
+// "Love it", "Productive", "Like") while still counting as one like per user.
+model PostLike {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reaction  String   @default("LIKE")
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+}
+
+model PostSave {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+}
+
+model Comment {
+  id       String    @id @default(cuid())
+  postId   String
+  post     Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body     String
+  parentId String?
+  parent   Comment?  @relation("replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("replies")
+
+  likeCount Int      @default(0)
+  createdAt DateTime @default(now())
+
+  likes CommentLike[]
+}
+
+model CommentLike {
+  id        String   @id @default(cuid())
+  commentId String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([commentId, userId])
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+}
