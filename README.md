@@ -75,22 +75,49 @@ Browse seeded users with `npm run db:studio` (Prisma Studio).
 
 ## Deploying to Vercel
 
-1. **Push this repo to GitHub** (see `git remote add origin ...` / `git push -u origin main`).
-2. **Provision a Postgres database** — any hosted Postgres works. Easiest options:
-   - [Neon](https://neon.tech) or [Supabase](https://supabase.com) (both have a free tier) — create a project, copy the connection string. Prefer the **pooled/"pgbouncer"** connection string if offered, since serverless functions open many short-lived connections.
-   - Or Vercel's own **Storage → Postgres** tab (Neon-backed) from the project dashboard.
-3. **Import the repo in Vercel** ([vercel.com/new](https://vercel.com/new)) — it auto-detects Next.js, no build config changes needed.
-4. **Set environment variables** in the Vercel project (Settings → Environment Variables), for Production *and* Preview:
-   - `DATABASE_URL` — the connection string from step 2
-   - `AUTH_SECRET` — generate with `npx auth secret`
-   - `NEXTAUTH_URL` — your deployed URL (e.g. `https://your-app.vercel.app`); on Preview deployments this can be left unset, `trustHost: true` in `src/lib/auth.ts` lets Auth.js infer it from the request
-   - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — optional; if set, add `https://<your-domain>/api/auth/callback/google` to the OAuth client's authorized redirect URIs in Google Cloud Console
-5. **Push the schema and seed data to the production database** — run these locally once, pointed at the production `DATABASE_URL` (e.g. via `vercel env pull .env.production.local` then `dotenv -e .env.production.local -- npm run db:push`, or by temporarily pasting the connection string into `.env`):
-   ```bash
-   npm run db:push
-   npm run db:seed
-   ```
-6. **Deploy** — Vercel builds automatically on push (`postinstall` runs `prisma generate` before the build). Trigger it manually from the dashboard, or just push to `main`.
+### 1. Push this repo to GitHub
+
+Create an empty repo on [github.com/new](https://github.com/new) (no README/license — this repo already has one), then:
+
+```bash
+git remote add origin https://github.com/<your-username>/<your-repo>.git
+git push -u origin main
+```
+
+### 2. Create a Neon database
+
+1. Go to [neon.tech](https://neon.tech) → sign up → **New Project**.
+2. In the project dashboard, copy the **pooled** connection string (toggle "Pooled connection" — serverless functions open many short-lived connections, and the pooled string handles that correctly). It looks like:
+   `postgresql://<user>:<password>@<host>-pooler.<region>.aws.neon.tech/<db>?sslmode=require`
+
+### 3. Import the repo in Vercel
+
+[vercel.com/new](https://vercel.com/new) → import the GitHub repo → it auto-detects Next.js, no build config changes needed.
+
+### 4. Set environment variables
+
+In the Vercel project → Settings → Environment Variables (add for **Production** and **Preview**):
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | the pooled Neon connection string from step 2 |
+| `AUTH_SECRET` | generate locally with `npx auth secret` |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | optional — if set, add `https://<your-domain>/api/auth/callback/google` to the OAuth client's authorized redirect URIs in Google Cloud Console |
+
+`NEXTAUTH_URL` doesn't need to be set — `trustHost: true` in `src/lib/auth.ts` lets Auth.js infer the correct URL on both Production and Preview deployments.
+
+### 5. Push the schema and seed data to Neon
+
+Run once, locally, pointed at the Neon connection string (either the pooled one above, or Neon's **unpooled** string — `db push`/seeding are one-shot scripts, not long-lived serverless functions, so either works):
+
+```bash
+DATABASE_URL="<your-neon-connection-string>" npm run db:push
+DATABASE_URL="<your-neon-connection-string>" npm run db:seed
+```
+
+### 6. Deploy
+
+Vercel builds automatically on push (`postinstall` runs `prisma generate` before the build). The first deploy kicks off as soon as you import the repo in step 3; every subsequent push to `main` redeploys automatically.
 
 ## Notable implementation choices
 
