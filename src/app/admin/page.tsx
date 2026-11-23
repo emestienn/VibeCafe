@@ -29,7 +29,7 @@ export default async function AdminPage() {
   return (
     <div>
       <span className="text-sm font-semibold uppercase tracking-wider text-accent">{t("eyebrow")}</span>
-      <h1 className="mt-2 font-display text-3xl sm:text-4xl">{t("title")}</h1>
+      <h1 className="mt-2 font-display text-3xl sm:text-4xl">{t("dashboardTitle")}</h1>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-accent/30 bg-accent/5 p-5">

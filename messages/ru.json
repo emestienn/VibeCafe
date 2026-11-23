@@ -438,6 +438,7 @@
   "admin": {
     "eyebrow": "Админ",
     "title": "Название",
+    "dashboardTitle": "Панель управления",
     "totalUsers": "Всего пользователей",
     "cafes": "Кафе",
     "reviews": "Отзывы",
