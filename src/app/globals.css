@@ -192,6 +192,10 @@
   font-family: var(--font-sans);
   z-index: 0;
 }
+/* Warm the OSM tiles slightly so they sit with the cream palette. */
+.vc-map .leaflet-tile-pane {
+  filter: sepia(0.18) saturate(0.85) brightness(1.02);
+}
 .vc-map .leaflet-control-attribution {
   font-size: 10px;
   background: color-mix(in srgb, var(--card) 85%, transparent);

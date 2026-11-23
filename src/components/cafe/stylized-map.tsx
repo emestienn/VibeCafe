@@ -20,9 +20,8 @@ type MapCafe = {
   rating: number;
 };
 
-const TILE_URL = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
-const TILE_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+const TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]!);
@@ -47,6 +46,17 @@ function popupHtml(cafe: MapCafe) {
       <span class="vc-popup__meta">★ ${cafe.rating.toFixed(1)} · ${escapeHtml(priceLevelLabel(cafe.priceLevel))} · Vibe ${cafe.vibeScore}</span>
     </span>
   </a>`;
+}
+
+// Groups points that lie within ~50 km of each other and returns the biggest group.
+function largestCluster<T extends { lat: number; lng: number }>(points: T[]): T[] {
+  const groups: T[][] = [];
+  for (const p of points) {
+    const g = groups.find((grp) => Math.abs(grp[0].lat - p.lat) < 0.45 && Math.abs(grp[0].lng - p.lng) < 0.6);
+    if (g) g.push(p);
+    else groups.push([p]);
+  }
+  return groups.sort((a, b) => b.length - a.length)[0] ?? [];
 }
 
 // Real interactive map (Leaflet + OpenStreetMap/CARTO tiles). The name is kept
@@ -82,7 +92,7 @@ export function StylizedMap({
         scrollWheelZoom: false,
         attributionControl: true,
       }).setView([41.3111, 69.2797], 12);
-      L.tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, subdomains: "abcd", maxZoom: 19 }).addTo(map);
+      L.tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, maxZoom: 19 }).addTo(map);
       mapRef.current = map;
       // Containers inside sticky/sheet layouts can report 0 size on first paint.
       setTimeout(() => map.invalidateSize(), 200);
@@ -117,10 +127,13 @@ export function StylizedMap({
       markersRef.current.set(cafe.id, { marker, cafe });
     }
 
-    if (valid.length > 1) {
-      map.fitBounds(L.latLngBounds(valid.map((c) => [c.lat, c.lng] as [number, number])), { padding: [40, 40], maxZoom: 14 });
-    } else if (valid.length === 1) {
-      map.setView([valid[0].lat, valid[0].lng], 14);
+    // Cafés can span several cities (hundreds of km apart). Frame the cluster
+    // with the most cafés so pins stay readable; pan/zoom reaches the rest.
+    const focus = largestCluster(valid);
+    if (focus.length > 1) {
+      map.fitBounds(L.latLngBounds(focus.map((c) => [c.lat, c.lng] as [number, number])), { padding: [40, 40], maxZoom: 14 });
+    } else if (focus.length === 1) {
+      map.setView([focus[0].lat, focus[0].lng], 14);
     }
   }
 
