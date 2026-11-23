@@ -1,12 +1,10 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
-import { Coffee, Star } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { useMemo, useState } from "react";
+import "leaflet/dist/leaflet.css";
 
-import { projectPins } from "@/lib/map-layout";
+import type { Map as LeafletMap, Marker } from "leaflet";
+import { useEffect, useRef } from "react";
+
 import { priceLevelLabel } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +20,37 @@ type MapCafe = {
   rating: number;
 };
 
+const TILE_URL = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+const TILE_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]!);
+}
+
+function pinHtml(cafe: MapCafe, active: boolean) {
+  return `<div class="vc-pin${active ? " vc-pin--active" : ""}">
+    <span class="vc-pin__label">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/><path d="M6 2v2"/></svg>
+      ${cafe.vibeScore}
+    </span>
+    <span class="vc-pin__tip"></span>
+  </div>`;
+}
+
+function popupHtml(cafe: MapCafe) {
+  const name = escapeHtml(cafe.name);
+  return `<a href="/cafe/${encodeURIComponent(cafe.slug)}" class="vc-popup">
+    <img src="${escapeHtml(cafe.heroImageUrl)}" alt="${name}" class="vc-popup__img" />
+    <span class="vc-popup__body">
+      <span class="vc-popup__name">${name}</span>
+      <span class="vc-popup__meta">★ ${cafe.rating.toFixed(1)} · ${escapeHtml(priceLevelLabel(cafe.priceLevel))} · Vibe ${cafe.vibeScore}</span>
+    </span>
+  </a>`;
+}
+
+// Real interactive map (Leaflet + OpenStreetMap/CARTO tiles). The name is kept
+// from the earlier stylized placeholder so existing imports keep working.
 export function StylizedMap({
   cafes,
   activeId,
@@ -33,104 +62,88 @@ export function StylizedMap({
   onActiveChange?: (id: string | null) => void;
   className?: string;
 }) {
-  const [hoverId, setHoverId] = useState<string | null>(null);
-  const pins = useMemo(() => projectPins(cafes), [cafes]);
-  const openId = activeId ?? hoverId;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
+  const markersRef = useRef<Map<string, { marker: Marker; cafe: MapCafe }>>(new Map());
+  const leafletRef = useRef<typeof import("leaflet") | null>(null);
+  const onActiveChangeRef = useRef(onActiveChange);
+  onActiveChangeRef.current = onActiveChange;
+
+  // Create the map once.
+  useEffect(() => {
+    let cancelled = false;
+    const markers = markersRef.current;
+    (async () => {
+      const L = await import("leaflet");
+      if (cancelled || !containerRef.current || mapRef.current) return;
+      leafletRef.current = L;
+      const map = L.map(containerRef.current, {
+        zoomControl: true,
+        scrollWheelZoom: false,
+        attributionControl: true,
+      }).setView([41.3111, 69.2797], 12);
+      L.tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, subdomains: "abcd", maxZoom: 19 }).addTo(map);
+      mapRef.current = map;
+      // Containers inside sticky/sheet layouts can report 0 size on first paint.
+      setTimeout(() => map.invalidateSize(), 200);
+      syncMarkers();
+    })();
+    return () => {
+      cancelled = true;
+      mapRef.current?.remove();
+      mapRef.current = null;
+      markers.clear();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function syncMarkers() {
+    const L = leafletRef.current;
+    const map = mapRef.current;
+    if (!L || !map) return;
+
+    markersRef.current.forEach(({ marker }) => marker.remove());
+    markersRef.current.clear();
+
+    const valid = cafes.filter((c) => Number.isFinite(c.lat) && Number.isFinite(c.lng));
+    for (const cafe of valid) {
+      const icon = L.divIcon({ html: pinHtml(cafe, false), className: "vc-pin-wrap", iconSize: [56, 34], iconAnchor: [28, 34], popupAnchor: [0, -34] });
+      const marker = L.marker([cafe.lat, cafe.lng], { icon, riseOnHover: true })
+        .bindPopup(popupHtml(cafe), { closeButton: false, className: "vc-popup-wrap", offset: [0, -2] })
+        .addTo(map);
+      marker.on("mouseover", () => onActiveChangeRef.current?.(cafe.id));
+      marker.on("mouseout", () => onActiveChangeRef.current?.(null));
+      marker.on("click", () => onActiveChangeRef.current?.(cafe.id));
+      markersRef.current.set(cafe.id, { marker, cafe });
+    }
+
+    if (valid.length > 1) {
+      map.fitBounds(L.latLngBounds(valid.map((c) => [c.lat, c.lng] as [number, number])), { padding: [40, 40], maxZoom: 14 });
+    } else if (valid.length === 1) {
+      map.setView([valid[0].lat, valid[0].lng], 14);
+    }
+  }
+
+  // Re-draw markers when the filtered café list changes.
+  useEffect(() => {
+    syncMarkers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cafes.map((c) => c.id).join(",")]);
+
+  // Highlight the active pin (e.g. when hovering a card in the list).
+  useEffect(() => {
+    const L = leafletRef.current;
+    if (!L) return;
+    markersRef.current.forEach(({ marker, cafe }, id) => {
+      const active = id === activeId;
+      marker.setIcon(L.divIcon({ html: pinHtml(cafe, active), className: "vc-pin-wrap", iconSize: [56, 34], iconAnchor: [28, 34], popupAnchor: [0, -34] }));
+      marker.setZIndexOffset(active ? 1000 : 0);
+    });
+  }, [activeId]);
 
   return (
-    <div
-      className={cn(
-        "relative h-full w-full overflow-hidden rounded-3xl border border-border",
-        className,
-      )}
-      style={{
-        backgroundColor: "var(--color-cream-deep)",
-        backgroundImage:
-          "linear-gradient(var(--color-border) 1px, transparent 1px), linear-gradient(90deg, var(--color-border) 1px, transparent 1px)",
-        backgroundSize: "48px 48px",
-      }}
-    >
-      {/* decorative "blocks" to suggest a city map without real tiles */}
-      <div className="pointer-events-none absolute inset-0 opacity-60">
-        {Array.from({ length: 14 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute rounded-md bg-surface/70"
-            style={{
-              left: `${(i * 37) % 90}%`,
-              top: `${(i * 53) % 85}%`,
-              width: `${10 + ((i * 17) % 10)}%`,
-              height: `${6 + ((i * 11) % 8)}%`,
-            }}
-          />
-        ))}
-      </div>
-
-      {pins.map((cafe) => {
-        const isOpen = openId === cafe.id;
-        return (
-          <div
-            key={cafe.id}
-            className="absolute -translate-x-1/2 -translate-y-full"
-            style={{ left: `${cafe.xPct}%`, top: `${cafe.yPct}%` }}
-          >
-            <button
-              onMouseEnter={() => {
-                setHoverId(cafe.id);
-                onActiveChange?.(cafe.id);
-              }}
-              onMouseLeave={() => {
-                setHoverId(null);
-                onActiveChange?.(null);
-              }}
-              onClick={() => onActiveChange?.(cafe.id)}
-              className="group relative z-10 flex flex-col items-center"
-            >
-              <span
-                className={cn(
-                  "flex items-center gap-1 rounded-full border-2 border-background px-2.5 py-1 text-xs font-semibold shadow-md transition-all",
-                  isOpen ? "scale-110 bg-accent text-accent-foreground" : "bg-primary text-primary-foreground",
-                )}
-              >
-                <Coffee className="size-3" /> {cafe.vibeScore}
-              </span>
-              <span
-                className={cn(
-                  "-mt-[1px] size-2 rotate-45 border-b-2 border-r-2 border-background",
-                  isOpen ? "bg-accent" : "bg-primary",
-                )}
-              />
-            </button>
-
-            <AnimatePresence>
-              {isOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 6, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 6, scale: 0.95 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute bottom-full left-1/2 z-20 mb-2 w-52 -translate-x-1/2"
-                >
-                  <Link
-                    href={`/cafe/${cafe.slug}`}
-                    className="flex gap-2.5 rounded-2xl border border-border bg-card p-2.5 shadow-xl"
-                  >
-                    <div className="relative size-14 shrink-0 overflow-hidden rounded-xl">
-                      <Image src={cafe.heroImageUrl} alt={cafe.name} fill className="object-cover" sizes="56px" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold">{cafe.name}</p>
-                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Star className="size-3 fill-accent text-accent" /> {cafe.rating.toFixed(1)} · {priceLevelLabel(cafe.priceLevel)}
-                      </p>
-                    </div>
-                  </Link>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        );
-      })}
+    <div className={cn("relative h-full w-full overflow-hidden rounded-3xl border border-border", className)}>
+      <div ref={containerRef} className="vc-map h-full w-full" />
     </div>
   );
 }

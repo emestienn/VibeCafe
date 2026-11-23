@@ -48,6 +48,13 @@ const NEIGHBORHOODS: Record<string, string[]> = {
   Bukhara: ["Old Town", "Lyabi House", "Eshoni Pir"],
 };
 
+// Approximate city centers, used to place each café near its own city on the map.
+const CITY_CENTERS: Record<keyof typeof NEIGHBORHOODS, { lat: number; lng: number }> = {
+  Tashkent: { lat: 41.3111, lng: 69.2797 },
+  Samarkand: { lat: 39.6542, lng: 66.9597 },
+  Bukhara: { lat: 39.7747, lng: 64.4286 },
+};
+
 const STREETS = ["Afrosiyob St", "Islam Karimov St", "Buyuk Ipak Yuli", "Mustaqillik Ave", "Shota Rustaveli St", "Amir Temur Ave", "Bobur St", "Nukus St", "Parkent St", "Universitet St"];
 
 // 20 fictional cafés, each with a distinct personality
@@ -644,8 +651,8 @@ async function main() {
         address: `${faker.number.int({ min: 1, max: 140 })} ${pick(STREETS)}`,
         city: seed.city,
         neighborhood: pick(NEIGHBORHOODS[seed.city]),
-        lat: 41.29 + faker.number.float({ min: -0.08, max: 0.08, fractionDigits: 4 }),
-        lng: 69.24 + faker.number.float({ min: -0.08, max: 0.08, fractionDigits: 4 }),
+        lat: CITY_CENTERS[seed.city].lat + faker.number.float({ min: -0.05, max: 0.05, fractionDigits: 4 }),
+        lng: CITY_CENTERS[seed.city].lng + faker.number.float({ min: -0.06, max: 0.06, fractionDigits: 4 }),
         priceLevel: seed.priceLevel,
         avgPriceUsd: seed.priceLevel * 3.5,
         openingHours: seed.isOpenLate ? LATE_HOURS : OPENING_HOURS,
